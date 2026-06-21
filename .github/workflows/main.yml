@@ -1,0 +1,106 @@
+name: Build vmlinux-btf package
+
+on:
+  workflow_dispatch:
+    inputs:
+      openwrt_branch:
+        description: 'OpenWrt branch/tag (e.g. openwrt-24.10, v24.10.5)'
+        required: true
+        default: 'openwrt-24.10'
+      target:
+        description: 'Target (e.g. bcm27xx)'
+        required: true
+        default: 'bcm27xx'
+      subtarget:
+        description: 'Subtarget (e.g. bcm2711)'
+        required: true
+        default: 'bcm2711'
+      pkg_path:
+        description: 'Path of this package inside package/ dir'
+        required: true
+        default: 'package/kernel/vmlinux-btf'
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout this repo (package source)
+        uses: actions/checkout@v4
+        with:
+          path: pkgsrc
+
+      - name: Install build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential clang flex bison g++ gawk \
+            gcc-multilib g++-multilib gettext git libncurses-dev \
+            libssl-dev python3-distutils python3-setuptools \
+            python3-dev rsync swig unzip zlib1g-dev file wget \
+            libelf-dev dwarves
+
+      - name: Clone OpenWrt buildroot
+        run: |
+          git clone --depth 1 -b "${{ inputs.openwrt_branch }}" \
+            https://github.com/openwrt/openwrt.git openwrt
+
+      - name: Inject custom package
+        run: |
+          mkdir -p "openwrt/${{ inputs.pkg_path }}"
+          cp -r pkgsrc/* "openwrt/${{ inputs.pkg_path }}/"
+
+      - name: Update & install feeds
+        working-directory: openwrt
+        run: |
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+
+      - name: Set defconfig
+        working-directory: openwrt
+        run: |
+          cat <<EOF > .config
+          CONFIG_TARGET_${{ inputs.target }}=y
+          CONFIG_TARGET_${{ inputs.target }}_${{ inputs.subtarget }}=y
+          CONFIG_PACKAGE_vmlinux-btf=y
+          EOF
+          make defconfig
+
+      - name: Show resolved package config (debug)
+        working-directory: openwrt
+        run: |
+          ./scripts/diffconfig.sh || true
+          grep vmlinux-btf .config || true
+
+      - name: Download kernel sources
+        working-directory: openwrt
+        run: make download V=s
+
+      - name: Build kernel toolchain (required before package build)
+        working-directory: openwrt
+        run: |
+          make tools/install -j$(nproc) V=s
+          make toolchain/install -j$(nproc) V=s
+
+      - name: Build target kernel first (needed for .config + Module.symvers etc)
+        working-directory: openwrt
+        run: |
+          make target/linux/compile -j$(nproc) V=s
+
+      - name: Build vmlinux-btf package
+        working-directory: openwrt
+        run: |
+          make package/kernel/vmlinux-btf/compile -j$(nproc) V=s
+
+      - name: Locate built ipk/apk
+        working-directory: openwrt
+        run: |
+          find bin/ -iname "*vmlinux-btf*"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vmlinux-btf-${{ inputs.target }}-${{ inputs.subtarget }}
+          path: |
+            openwrt/bin/**/vmlinux-btf*.ipk
+            openwrt/bin/**/vmlinux-btf*.apk
+          if-no-files-found: error
