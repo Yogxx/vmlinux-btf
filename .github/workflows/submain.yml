@@ -95,6 +95,7 @@ jobs:
             libssl-dev python3-distutils python3-setuptools \
             python3-dev rsync swig unzip zlib1g-dev file wget \
             libelf-dev dwarves ccache
+            python3-pyelftools
 
       - name: Clone OpenWrt buildroot
         run: |
