@@ -1,4 +1,4 @@
-name: Build vmlinux-btf subpackage
+name: Build vmlinux-btf bothpackage
 
 on:
   workflow_dispatch:
