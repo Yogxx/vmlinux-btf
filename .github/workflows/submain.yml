@@ -6,7 +6,7 @@ on:
       openwrt_branch:
         description: 'OpenWrt branch/tag (e.g. openwrt-24.10, v24.10.5)'
         required: true
-        default: 'openwrt-24.10'
+        default: 'openwrt-25.12'
       targets:
         description: 'Targets to build (comma-separated: bcm27xx, x86, aarch64 — atau "all")'
         required: true
@@ -29,6 +29,7 @@ jobs:
           ALL_TARGETS='[
             {"target":"bcm27xx",  "subtarget":"bcm2711",  "label":"rpi4"},
             {"target":"x86",      "subtarget":"64",        "label":"x86_64"},
+            {"target":"sunxi",      "subtarget":"cortexa53",        "label":"cortexa53"},
             {"target":"armsr",    "subtarget":"armv8",     "label":"aarch64_generic"}
           ]'
 
