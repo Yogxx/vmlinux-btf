@@ -42,7 +42,6 @@ jobs:
           ALL_TARGETS='[
             {"target":"bcm27xx",  "subtarget":"bcm2711",   "label":"rpi4"},
             {"target":"x86",      "subtarget":"64",         "label":"x86_64"},
-            {"target":"sunxi",    "subtarget":"cortexa53",  "label":"cortexa53"},
             {"target":"rockchip", "subtarget":"armv8",      "label":"rockchip"},
             {"target":"armsr",    "subtarget":"armv8",      "label":"aarch64_generic"}
           ]'
