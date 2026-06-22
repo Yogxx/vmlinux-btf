@@ -180,14 +180,13 @@ jobs:
 
       - name: Prepare kernel config
         working-directory: openwrt
-        env:
-          CCACHE_DIR: ~/.ccache
         run: |
-          export PATH="/usr/lib/ccache:$PATH"
-          # Extract + patch kernel source ke build_dir
           make target/linux/prepare V=s
-          # Set semua NEW kconfig option ke default, hindari prompt interaktif
-          make kernel_olddefconfig V=s
+          # Jawab semua NEW kconfig prompt dengan default (enter)
+          find build_dir/target-*/linux-*/linux-* -maxdepth 0 -type d | while read KDIR; do
+            echo "olddefconfig: $KDIR"
+            make -C "$KDIR" olddefconfig 2>/dev/null || true
+          done
 
       - name: Build tools
         working-directory: openwrt
