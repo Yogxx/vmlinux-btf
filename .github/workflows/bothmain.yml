@@ -167,6 +167,7 @@ jobs:
           CONFIG_PACKAGE_vmlinux-btf=y
           EOF
           make defconfig
+          make kernel_olddefconfig || true
 
       - name: Show resolved config (debug)
         working-directory: openwrt
